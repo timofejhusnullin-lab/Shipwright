@@ -44,6 +44,7 @@
 #include "SohGui/SohMenu.h"
 #include "SohGui/SohGui.hpp"
 #include "soh/Enhancements/Atmosphere/Atmosphere.h"
+#include "soh/Enhancements/GodMenu/GodMenu.h"
 #include "variables.h"
 #include "z64.h"
 #include "macros.h"
@@ -1712,11 +1713,16 @@ extern "C" void Graph_StartFrame() {
             }
             break;
         }
-        case KbScancode::LUS_KB_F2: {
-            // Atmosphere mod window (soh/Enhancements/Atmosphere)
-            auto atmosphereWindow = gui->GetGuiWindow(ATMOSPHERE_WINDOW_NAME);
-            if (atmosphereWindow != nullptr) {
-                atmosphereWindow->ToggleVisibility();
+        // Mod windows. F2 is taken by libultraship (mouse capture), so the mods use F3 and F4.
+        case KbScancode::LUS_KB_F3:
+        case KbScancode::LUS_KB_F4: {
+            auto modWindow =
+                gui->GetGuiWindow(dwScancode == KbScancode::LUS_KB_F3 ? ATMOSPHERE_WINDOW_NAME : GOD_MENU_WINDOW_NAME);
+            if (modWindow != nullptr) {
+                modWindow->ToggleVisibility();
+                if (!modWindow->IsVisible()) {
+                    ModWindows_RestoreMouseCapture();
+                }
             }
             break;
         }

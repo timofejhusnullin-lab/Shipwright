@@ -1,5 +1,5 @@
 // Atmosphere mod
-// F2 opens a small window where you can:
+// F3 opens a small window where you can:
 //  - force any of the game's sky texture sets (works in every outdoor area with a normal sky)
 //  - change the time of day with a slider
 //  - freeze time
@@ -12,6 +12,7 @@
 #include <ship/Context.h>
 #include <ship/window/Window.h>
 #include <ship/window/gui/Gui.h>
+#include <ship/window/MouseStateManager.h>
 
 #include "soh/ShipInit.hpp"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
@@ -66,14 +67,83 @@ static void SetDayTime(uint16_t time) {
     }
 }
 
+// ---------- Light follows sky ----------
+// The game's lighting, fog and ambient colour come from the time of day. When a sky is forced,
+// lock the time to one that matches it, so the ground is lit like the sky looks.
+#define CVAR_MATCH_LIGHT CVAR_ATMOSPHERE("MatchLight")
+
+static uint16_t SkyIndexToTime(int idx) {
+    switch (idx % 4) {
+        case 0:
+            return 0x3AAA; // 05:30 sunrise
+        case 1:
+            return 0x8000; // 12:00 day
+        case 2:
+            return 0xBAAA; // 17:30 sunset
+        default:
+            return 0x0000; // 00:00 night (also used for the dark "Holy" sky)
+    }
+}
+
+static bool LightFollowsSky() {
+    return Atmosphere_GetSkyOverride() >= 0 && CVarGetInteger(CVAR_MATCH_LIGHT, 1) != 0;
+}
+
+static void OnGameFrameUpdateMatchLight() {
+    if (!GameInteractor::IsSaveLoaded(true)) {
+        return;
+    }
+    int sky = Atmosphere_GetSkyOverride();
+    if (sky < 0) {
+        return;
+    }
+    uint16_t target = SkyIndexToTime(sky == 8 ? 3 : sky);
+    if (gSaveContext.dayTime != target) {
+        SetDayTime(target);
+    }
+}
+
+static void RegisterMatchLight() {
+    COND_HOOK(OnGameFrameUpdate, LightFollowsSky(), OnGameFrameUpdateMatchLight);
+}
+
+static RegisterShipInitFunc sMatchLightInit(RegisterMatchLight, { CVAR_MATCH_LIGHT, CVAR_ATMOSPHERE("SkyOverride"),
+                                                                  CVAR_ATMOSPHERE("SkyIndex") });
+
+static void SetAtmosphereCVar(const char* cvar, int value) {
+    CVarSetInteger(cvar, value);
+    ShipInit::Init(cvar);
+    SaveCVars();
+}
+
+void ModWindows_KeepCursorFree(int& lastFrame) {
+    auto wnd = Ship::Context::GetRawInstance()->GetWindow();
+    int frame = ImGui::GetFrameCount();
+    bool justOpened = lastFrame != frame - 1;
+    lastFrame = frame;
+    if (wnd->IsMouseCaptured()) {
+        wnd->SetMouseCapture(false); // also shows the cursor
+    } else if (justOpened) {
+        wnd->SetCursorVisibility(true); // only once: ShowCursor is counter-based on Windows
+    }
+    // Keep the idle timer from hiding the cursor while the window is open
+    wnd->GetMouseStateManager()->ResetCursorVisibilityTimer();
+}
+
+void ModWindows_RestoreMouseCapture() {
+    Ship::Context::GetRawInstance()->GetWindow()->GetMouseStateManager()->UpdateMouseCapture();
+}
+
+static int sAtmosphereLastFrame = -1;
+
 void AtmosphereWindow::DrawElement() {
+    ModWindows_KeepCursorFree(sAtmosphereLastFrame);
     // ---------- Sky ----------
     ImGui::SeparatorText("Sky");
 
     bool overrideOn = CVarGetInteger(CVAR_ATMOSPHERE("SkyOverride"), 0) != 0;
     if (ImGui::Checkbox("Override sky", &overrideOn)) {
-        CVarSetInteger(CVAR_ATMOSPHERE("SkyOverride"), overrideOn ? 1 : 0);
-        SaveCVars();
+        SetAtmosphereCVar(CVAR_ATMOSPHERE("SkyOverride"), overrideOn ? 1 : 0);
     }
     ImGui::SameLine();
     ImGui::TextDisabled("(?)");
@@ -90,13 +160,20 @@ void AtmosphereWindow::DrawElement() {
     ImGui::BeginDisabled(!overrideOn);
     for (int i = 0; i < sSkyOptionCount; i++) {
         if (ImGui::RadioButton(sSkyOptions[i].label, current == i)) {
-            CVarSetInteger(CVAR_ATMOSPHERE("SkyIndex"), i);
-            SaveCVars();
+            SetAtmosphereCVar(CVAR_ATMOSPHERE("SkyIndex"), i);
         }
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Textures: textures/%s/  (replace them with a pack in the mods folder)",
                               sSkyOptions[i].textureFolder);
         }
+    }
+    bool matchLight = CVarGetInteger(CVAR_MATCH_LIGHT, 1) != 0;
+    if (ImGui::Checkbox("Light follows sky", &matchLight)) {
+        SetAtmosphereCVar(CVAR_MATCH_LIGHT, matchLight ? 1 : 0);
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Locks the time of day to the chosen sky, so lighting, fog and shadows match it\n"
+                          "(night sky = night light, sunset sky = sunset light).");
     }
     ImGui::EndDisabled();
 
@@ -108,6 +185,11 @@ void AtmosphereWindow::DrawElement() {
         return;
     }
 
+    bool timeLocked = LightFollowsSky();
+    if (timeLocked) {
+        ImGui::TextDisabled("Time follows the chosen sky.");
+    }
+    ImGui::BeginDisabled(timeLocked);
     float hours = gSaveContext.dayTime * 24.0f / 65536.0f;
     ImGui::SetNextItemWidth(220.0f);
     if (ImGui::SliderFloat("##hours", &hours, 0.0f, 23.99f, "%.2f h")) {
@@ -132,6 +214,8 @@ void AtmosphereWindow::DrawElement() {
         }
     }
 
+    ImGui::EndDisabled();
+
     bool freeze = CVarGetInteger(CVAR_FREEZE_TIME, 0) != 0;
     if (ImGui::Checkbox("Freeze time", &freeze)) {
         CVarSetInteger(CVAR_FREEZE_TIME, freeze ? 1 : 0);
@@ -140,5 +224,5 @@ void AtmosphereWindow::DrawElement() {
     }
 
     ImGui::Spacing();
-    ImGui::TextDisabled("F2 - show / hide this window");
+    ImGui::TextDisabled("F3 - show / hide this window");
 }

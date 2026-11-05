@@ -2,7 +2,7 @@
 
 #include "soh/cvar_prefixes.h"
 
-// Atmosphere mod: in-game window (F2) to pick the sky texture set and control time of day.
+// Atmosphere mod: in-game window (F3) to pick the sky texture set and control time of day.
 
 #define CVAR_ATMOSPHERE(var) CVAR_ENHANCEMENT("Atmosphere." var)
 #define ATMOSPHERE_WINDOW_NAME "Atmosphere"
@@ -19,6 +19,13 @@ class AtmosphereWindow final : public Ship::GuiWindow {
     void DrawElement() override;
     void UpdateElement() override {};
 };
+
+// Shared by the mod windows (Atmosphere, God Menu): while a window is open, keep the mouse
+// released and the cursor visible so the window can be clicked.
+// lastFrame: per-window storage (start at -1), used to detect the frame the window was opened.
+void ModWindows_KeepCursorFree(int& lastFrame);
+// Call after a mod window was closed with its hotkey: hands mouse capture back to the game settings.
+void ModWindows_RestoreMouseCapture();
 
 extern "C" {
 #endif

@@ -2175,11 +2175,16 @@ void SohMenu::AddMenuEnhancements() {
     // Atmosphere mod
     path.sidebarName = "Atmosphere";
     AddSidebarEntry("Enhancements", path.sidebarName, 1);
-    AddWidget(path, "Toggle Atmosphere Window (F2)", WIDGET_WINDOW_BUTTON)
+    AddWidget(path, "Toggle Atmosphere Window (F3)", WIDGET_WINDOW_BUTTON)
         .CVar(CVAR_WINDOW("Atmosphere"))
         .RaceDisable(false)
         .WindowName("Atmosphere")
-        .Options(WindowButtonOptions().Tooltip("Sky picker, time of day and freeze time. Hotkey: F2."));
+        .Options(WindowButtonOptions().Tooltip("Sky picker, time of day and freeze time. Hotkey: F3."));
+    AddWidget(path, "Toggle God Menu (F4)", WIDGET_WINDOW_BUTTON)
+        .CVar(CVAR_WINDOW("GodMenu"))
+        .RaceDisable(false)
+        .WindowName("God Menu")
+        .Options(WindowButtonOptions().Tooltip("God mode, fly, no clip, infinite items. Hotkey: F4."));
 
     // Timers
     path.sidebarName = "Timers";
