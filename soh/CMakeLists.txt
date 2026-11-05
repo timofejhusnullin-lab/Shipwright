@@ -234,11 +234,17 @@ endif()
 
 set(ROOT_NAMESPACE soh)
 
+# Local dev builds: skip link-time optimization (LTCG). Same compiler flags as Release, but the final
+# link no longer re-optimizes the whole program, so a one-file change relinks in seconds, not minutes.
+option(SOH_DISABLE_LTO "Disable link-time optimization for faster local rebuilds" OFF)
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set_target_properties(${PROJECT_NAME} PROPERTIES
         VS_GLOBAL_KEYWORD "Win32Proj"
     )
-    if(SOH_WINDOWS_64BIT)
+    if(SOH_DISABLE_LTO)
+        message(STATUS "SOH_DISABLE_LTO=ON: link-time optimization disabled (dev build)")
+    elseif(SOH_WINDOWS_64BIT)
         set_target_properties(${PROJECT_NAME} PROPERTIES
             INTERPROCEDURAL_OPTIMIZATION_RELEASE "TRUE"
         )

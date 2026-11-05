@@ -461,3 +461,6 @@ soh/properties.h
 /clang-format
 /clang-format.exe
 *.o2r
+
+# Local mods folder used by dev.bat / release.bat
+/mods/

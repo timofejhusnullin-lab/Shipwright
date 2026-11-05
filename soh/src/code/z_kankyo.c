@@ -695,12 +695,12 @@ void Environment_UpdateSkybox(PlayState* play, u8 skyboxId, EnvironmentContext* 
             if (forcedSky >= 0) {
                 if (!sAtmosphereSkyActive || envCtx->skybox1Index != forcedSky ||
                     envCtx->skybox2Index != forcedSky) {
-                    Skybox_ForceNormalSky(skyboxCtx, forcedSky, forcedSky);
-                    envCtx->skybox1Index = envCtx->skybox2Index = forcedSky;
+                    Skybox_ForceNormalSky(skyboxCtx, (u8)forcedSky, (u8)forcedSky);
+                    envCtx->skybox1Index = envCtx->skybox2Index = (u8)forcedSky;
                     envCtx->skyboxDmaState = SKYBOX_DMA_INACTIVE;
                     sAtmosphereSkyActive = true;
                 }
-                newSkybox1Index = newSkybox2Index = forcedSky;
+                newSkybox1Index = newSkybox2Index = (u8)forcedSky;
                 skyboxBlend = 0;
             } else if (sAtmosphereSkyActive) {
                 // Override switched off: go back to the sky for the current time of day
