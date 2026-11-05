@@ -21,7 +21,6 @@
 #include "soh/Notification/Notification.h"
 #include "soh/Enhancements/TimeDisplay/TimeDisplay.h"
 #include "soh/Enhancements/Atmosphere/Atmosphere.h"
-#include "soh/Enhancements/GodMenu/GodMenu.h"
 #include "soh/Enhancements/mod_menu.h"
 #include "soh/Network/Anchor/Anchor.h"
 #include "soh/Enhancements/audio/AudioEditor.h"
@@ -113,7 +112,6 @@ std::shared_ptr<SohModalWindow> mModalWindow;
 std::shared_ptr<Notification::Window> mNotificationWindow;
 std::shared_ptr<TimeDisplayWindow> mTimeDisplayWindow;
 std::shared_ptr<AtmosphereWindow> mAtmosphereWindow;
-std::shared_ptr<GodMenuWindow> mGodMenuWindow;
 std::shared_ptr<AnchorRoomWindow> mAnchorRoomWindow;
 
 UIWidgets::Colors GetMenuThemeColor() {
@@ -157,7 +155,6 @@ std::vector<std::shared_ptr<Ship::GuiWindow>> GetAllGuiWindows() {
         mNotificationWindow,
         mTimeDisplayWindow,
         mAtmosphereWindow,
-        mGodMenuWindow,
         mAnchorRoomWindow,
         // Registered outside SohGui.
         gui->GetGuiWindow("Configure Controller"),
@@ -277,9 +274,6 @@ void SetupGuiElements() {
     mAtmosphereWindow = std::make_shared<AtmosphereWindow>(CVAR_WINDOW("Atmosphere"), ATMOSPHERE_WINDOW_NAME,
                                                            ImVec2(340, 420));
     gui->AddGuiWindow(mAtmosphereWindow);
-    mGodMenuWindow =
-        std::make_shared<GodMenuWindow>(CVAR_WINDOW("GodMenu"), GOD_MENU_WINDOW_NAME, ImVec2(320, 420));
-    gui->AddGuiWindow(mGodMenuWindow);
     mAnchorRoomWindow = std::make_shared<AnchorRoomWindow>(CVAR_WINDOW("AnchorRoom"), "Anchor Room");
     gui->AddGuiWindow(mAnchorRoomWindow);
 }
@@ -319,7 +313,6 @@ void Destroy() {
     mPlandomizerWindow = nullptr;
     mTimeDisplayWindow = nullptr;
     mAtmosphereWindow = nullptr;
-    mGodMenuWindow = nullptr;
     mAnchorRoomWindow = nullptr;
 }
 

@@ -20,7 +20,7 @@ class AtmosphereWindow final : public Ship::GuiWindow {
     void UpdateElement() override {};
 };
 
-// Shared by the mod windows (Atmosphere, God Menu): while a window is open, keep the mouse
+// Shared by the mod windows (Atmosphere): while a window is open, keep the mouse
 // released and the cursor visible so the window can be clicked.
 // lastFrame: per-window storage (start at -1), used to detect the frame the window was opened.
 void ModWindows_KeepCursorFree(int& lastFrame);
