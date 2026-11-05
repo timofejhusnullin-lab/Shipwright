@@ -195,6 +195,8 @@ jobs:
 
   build-windows:
     needs: generate-soh-otr
+    permissions:
+      contents: write
     runs-on: windows-latest
     steps:
     - name: Install dependencies
@@ -210,7 +212,8 @@ jobs:
       with:
         max-size: "2G"
         evict-old-files: job
-        save: ${{ github.ref_name == github.event.repository.default_branch }}
+        # Forks: save the cache on every branch so the next build only recompiles changed files
+        save: ${{ github.ref_name == github.event.repository.default_branch || github.repository != 'HarbourMasters/Shipwright' }}
         key: ${{ runner.os }}-ccache-${{ github.ref }}-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-ccache-${{ github.ref }}
@@ -238,7 +241,7 @@ jobs:
         VCPKG_ROOT: ${{github.workspace}}/vcpkg
       run: |
         set $env:PATH="$env:USERPROFILE/.cargo/bin;$env:PATH"
-        cmake -S . -B build-windows -G Ninja -DCMAKE_MAKE_PROGRAM=ninja -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBUILD_REMOTE_CONTROL=1
+        cmake -S . -B build-windows -G Ninja -DCMAKE_MAKE_PROGRAM=ninja -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBUILD_REMOTE_CONTROL=1 -DSOH_DISABLE_LTO=${{ github.repository != 'HarbourMasters/Shipwright' && 'ON' || 'OFF' }}
         cmake --build build-windows --config Release --parallel 10
 
         (cd build-windows && cpack)
@@ -251,8 +254,18 @@ jobs:
       with:
         name: soh-windows
         path: soh-windows
+    - name: Publish latest build (forks)
+      if: ${{ github.repository != 'HarbourMasters/Shipwright' }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        (cd soh-windows && 7z a ../soh-latest.zip soh.exe soh.o2r > /dev/null)
+        gh release delete latest --yes --cleanup-tag -R "${{ github.repository }}" || true
+        gh release create latest soh-latest.zip -R "${{ github.repository }}" --target "${{ github.sha }}" \
+          --prerelease --title "Latest build (${{ github.ref_name }})" --notes "Built from ${{ github.sha }}"
     - name: Save Cache VCPKG folder
-      if: ${{ github.ref_name == github.event.repository.default_branch }}
+      if: ${{ github.ref_name == github.event.repository.default_branch || github.repository != 'HarbourMasters/Shipwright' }}
       uses: actions/cache/save@v5
       with:
         key: ${{ steps.restore-cache-vcpkg.outputs.cache-primary-key }}
