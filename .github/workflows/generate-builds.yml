@@ -45,6 +45,8 @@ jobs:
 
   build-macos:
     needs: generate-soh-otr
+    # Forks only need the Windows build
+    if: github.repository == 'HarbourMasters/Shipwright'
     runs-on: macos-15
     steps:
     - name: Git Checkout
@@ -88,6 +90,8 @@ jobs:
 
   build-linux:
     needs: generate-soh-otr
+    # Forks only need the Windows build
+    if: github.repository == 'HarbourMasters/Shipwright'
     strategy:
       fail-fast: false
       matrix:
