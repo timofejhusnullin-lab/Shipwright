@@ -2172,6 +2172,15 @@ void SohMenu::AddMenuEnhancements() {
         .CVar("gWindows.Timesplits.Settings")
         .WindowName("Time Splits Settings Window");
 
+    // Atmosphere mod
+    path.sidebarName = "Atmosphere";
+    AddSidebarEntry("Enhancements", path.sidebarName, 1);
+    AddWidget(path, "Toggle Atmosphere Window (F2)", WIDGET_WINDOW_BUTTON)
+        .CVar(CVAR_WINDOW("Atmosphere"))
+        .RaceDisable(false)
+        .WindowName("Atmosphere")
+        .Options(WindowButtonOptions().Tooltip("Sky picker, time of day and freeze time. Hotkey: F2."));
+
     // Timers
     path.sidebarName = "Timers";
     AddSidebarEntry("Enhancements", path.sidebarName, 3);

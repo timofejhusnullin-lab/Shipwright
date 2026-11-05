@@ -964,3 +964,25 @@ void Skybox_Update(SkyboxContext* skyboxCtx) {
         osSyncPrintf(VT_RST);
     }
 }
+
+// SOH [Atmosphere] Immediately load two normal-sky texture sets (and palettes) into both skybox slots.
+// Mirrors the SKYBOX_NORMAL_SKY branch of Skybox_Setup. Used by soh/Enhancements/Atmosphere.
+void Skybox_ForceNormalSky(SkyboxContext* skyboxCtx, u8 idxA, u8 idxB) {
+    SkyboxTableEntry entryA = sSkyboxTable[idxA];
+    SkyboxTableEntry entryB = sSkyboxTable[idxB];
+
+    for (int i = 0; i < 5; i++) {
+        LoadSkyboxTex(skyboxCtx, 0, i, entryA.textures[i], 128, i == 4 ? 128 : 64, 128, 64);
+        LoadSkyboxTex(skyboxCtx, 1, i, entryB.textures[i], 128, i == 4 ? 128 : 64, 128, 64);
+    }
+
+    if ((idxA & 1) ^ ((idxA & 4) >> 2)) {
+        LoadSkyboxPalette(skyboxCtx, 0, entryA.palettes[0], 16, 8);
+        LoadSkyboxPalette(skyboxCtx, 1, entryB.palettes[0], 16, 8);
+    } else {
+        LoadSkyboxPalette(skyboxCtx, 0, entryB.palettes[0], 16, 8);
+        LoadSkyboxPalette(skyboxCtx, 1, entryA.palettes[0], 16, 8);
+    }
+
+    Skybox_Update(skyboxCtx);
+}

@@ -43,6 +43,7 @@
 #include "frame_interpolation.h"
 #include "SohGui/SohMenu.h"
 #include "SohGui/SohGui.hpp"
+#include "soh/Enhancements/Atmosphere/Atmosphere.h"
 #include "variables.h"
 #include "z64.h"
 #include "macros.h"
@@ -1708,6 +1709,14 @@ extern "C" void Graph_StartFrame() {
                                      "The menubar, accessed by hitting F1, no longer exists.\nThe new menu can be "
                                      "accessed by hitting the Esc button instead.",
                                      "OK");
+            }
+            break;
+        }
+        case KbScancode::LUS_KB_F2: {
+            // Atmosphere mod window (soh/Enhancements/Atmosphere)
+            auto atmosphereWindow = gui->GetGuiWindow(ATMOSPHERE_WINDOW_NAME);
+            if (atmosphereWindow != nullptr) {
+                atmosphereWindow->ToggleVisibility();
             }
             break;
         }

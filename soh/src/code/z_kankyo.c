@@ -613,6 +613,10 @@ void func_8006FB94(EnvironmentContext* envCtx, u8 unused) {
 
 extern SkyboxTableEntry sSkyboxTable[];
 
+// SOH [Atmosphere] see soh/Enhancements/Atmosphere
+int Atmosphere_GetSkyOverride(void);
+void Skybox_ForceNormalSky(SkyboxContext* skyboxCtx, u8 idxA, u8 idxB);
+
 void Environment_UpdateSkybox(PlayState* play, u8 skyboxId, EnvironmentContext* envCtx, SkyboxContext* skyboxCtx) {
     size_t size;
     u8 i;
@@ -680,6 +684,33 @@ void Environment_UpdateSkybox(PlayState* play, u8 skyboxId, EnvironmentContext* 
             if (envCtx->unk_1A <= 0) {
                 envCtx->unk_19 = 0;
                 envCtx->unk_17 = envCtx->unk_18;
+            }
+        }
+
+        // SOH [Atmosphere] Force the sky texture set chosen in the Atmosphere window (F2)
+        {
+            static u8 sAtmosphereSkyActive = false;
+            s32 forcedSky = Atmosphere_GetSkyOverride();
+
+            if (forcedSky >= 0) {
+                if (!sAtmosphereSkyActive || envCtx->skybox1Index != forcedSky ||
+                    envCtx->skybox2Index != forcedSky) {
+                    Skybox_ForceNormalSky(skyboxCtx, forcedSky, forcedSky);
+                    envCtx->skybox1Index = envCtx->skybox2Index = forcedSky;
+                    envCtx->skyboxDmaState = SKYBOX_DMA_INACTIVE;
+                    sAtmosphereSkyActive = true;
+                }
+                newSkybox1Index = newSkybox2Index = forcedSky;
+                skyboxBlend = 0;
+            } else if (sAtmosphereSkyActive) {
+                // Override switched off: go back to the sky for the current time of day
+                sAtmosphereSkyActive = false;
+                if (newSkybox1Index != 0xFF) {
+                    Skybox_ForceNormalSky(skyboxCtx, newSkybox1Index, newSkybox2Index);
+                    envCtx->skybox1Index = newSkybox1Index;
+                    envCtx->skybox2Index = newSkybox2Index;
+                    envCtx->skyboxDmaState = SKYBOX_DMA_INACTIVE;
+                }
             }
         }
 
